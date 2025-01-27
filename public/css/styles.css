@@ -1,0 +1,19 @@
+/* ซ่อน input file */
+.custom-file-input {
+    display: none;
+}
+
+/* ปรับปุ่ม Choose File ให้อยู่ในลักษณะที่เหมาะสม */
+#chooseFileBtn {
+    cursor: pointer;
+}
+
+#fileName {
+    font-style: italic;
+    color: #555;
+    margin-left: 10px;
+}
+
+.ml-2 {
+    margin-left: 0.5rem;
+}

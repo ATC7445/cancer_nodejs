@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLOv8 Cancer Detection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css"> <!-- ลิงก์ไปที่ไฟล์ CSS -->
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">YOLOv8 Detection</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/history">History</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-5">
+        <h1 class="text-center">YOLOv8 Cancer Detection</h1>
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h4>Original Image</h4>
+                <img id="originalImage" src="" alt="Original Image" class="img-fluid border" style="max-height: 400px;">
+            </div>
+            <div class="col-md-6">
+                <h4>Predicted Image</h4>
+                <img id="predictedImage" src="" alt="Predicted Image" class="img-fluid border" style="max-height: 400px;">
+            </div>
+        </div>
+        <div class="mt-4">
+            <!-- เปลี่ยน input file ให้เป็นปุ่ม -->
+            <label for="fileInput" class="btn btn-primary" id="chooseFileBtn">Choose File</label>
+            <input type="file" id="fileInput" class="custom-file-input" accept="image/*">
+            <span id="fileName" class="ml-2"></span> <!-- แสดงชื่อไฟล์ -->
+            
+            <button id="predictBtn" class="btn btn-success">Predict</button>
+            <button id="clearBtn" class="btn btn-warning">Clear Images</button>
+            <button id="downloadBtn" class="btn btn-info">Download</button>
+            <button id="saveBtn" class="btn btn-secondary">Save Result</button>
+        </div>
+    </div>
+
+    <script src="/js/home.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

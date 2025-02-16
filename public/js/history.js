@@ -1,14 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
     const historyTable = document.getElementById("historyTable");
-    const noDataMessage = document.createElement("p");
-    noDataMessage.textContent = "No history data available.";
-    noDataMessage.style.display = "none"; // ซ่อนข้อความตอนแรก
-    historyTable.parentNode.appendChild(noDataMessage);
+    const noDataMessage = document.getElementById("noDataMessage");
+    const searchInput = document.getElementById("searchInput");
 
-    // ดึงข้อมูลจาก endpoint
+    // ดึงข้อมูลจาก API
     fetch('/history-data')
-        .then((response) => response.json()) // แปลง response เป็น JSON
-        .then((data) => {
+        .then(response => response.json())
+        .then(data => {
             if (data.length === 0) {
                 noDataMessage.style.display = "block"; // แสดงข้อความหากไม่มีข้อมูล
                 return;
@@ -18,79 +16,82 @@ document.addEventListener("DOMContentLoaded", () => {
                 const row = document.createElement("tr");
 
                 // คอลัมน์ลำดับ
-                const indexCell = document.createElement("td");
-                indexCell.textContent = index + 1;
-                row.appendChild(indexCell);
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${entry.file_name}</td>
+                    <td>${new Date(entry.uploaded_at).toLocaleString()}</td>
+                    <td>
+                        <img src="${entry.file_path}" alt="Predicted Image" class="img-thumbnail clickable-img" style="max-width: 100px; cursor: pointer;">
+                    </td>
+                    <td class="text-center">
+                        <a href="${entry.file_path}" download="${entry.file_name}" class="btn btn-success btn-sm me-2">
+                            <i class="bi bi-download"></i> Download
+                        </a>
+                        <button class="btn btn-danger btn-sm delete-btn" data-id="${entry.id}">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </td>
+                `;
 
-                // คอลัมน์ชื่อไฟล์
-                const imageCell = document.createElement("td");
-                imageCell.textContent = entry.file_name; // แสดงชื่อไฟล์
-                row.appendChild(imageCell);
-
-                // คอลัมน์ Timestamp
-                const timestampCell = document.createElement("td");
-                timestampCell.textContent = new Date(entry.uploaded_at).toLocaleString(); // แปลง timestamp
-                row.appendChild(timestampCell);
-
-                // แปลง path ให้เป็นรูปแบบที่เหมาะสมสำหรับแสดงผลใน URL
-                const imagePath = entry.file_path.replace(/\\/g, '/'); // แทนที่ backslashes ด้วย forward slashes
-
-                // คอลัมน์แสดงรูปภาพ
-                const imageDisplayCell = document.createElement("td");
-                const imageElement = document.createElement("img");
-                imageElement.src = imagePath; // ตั้งค่า src ด้วย path ที่ถูกต้อง
-                imageElement.alt = "Predicted Image";
-                imageElement.style.maxWidth = "150px";  // กำหนดขนาดภาพที่แสดง
-                imageDisplayCell.appendChild(imageElement);
-                row.appendChild(imageDisplayCell);
-
-                // คอลัมน์ Actions: ปุ่มลบและดาวน์โหลด
-                const actionCell = document.createElement("td");
-
-                // ใช้ Bootstrap classes เพื่อจัดตำแหน่งปุ่ม
-                const buttonContainer = document.createElement("div");
-                buttonContainer.classList.add("d-flex", "gap-3"); // ใช้ d-flex และ gap-3 เพื่อให้มีระยะห่างระหว่างปุ่ม
-
-                // ปุ่มดาวน์โหลด
-                const downloadBtn = document.createElement("button");
-                downloadBtn.textContent = "Download";
-                downloadBtn.classList.add("btn", "btn-success", "btn-sm");
-                downloadBtn.addEventListener("click", () => {
-                    window.location.href = imagePath;  // ให้ดาวน์โหลดไฟล์ภาพ
-                });
-                buttonContainer.appendChild(downloadBtn); // เพิ่มปุ่มดาวน์โหลดใน container
-
-                // ปุ่มลบ
-                const deleteBtn = document.createElement("button");
-                deleteBtn.textContent = "Delete";
-                deleteBtn.classList.add("btn", "btn-danger", "btn-sm");
-                deleteBtn.addEventListener("click", () => {
-                    if (confirm("Are you sure you want to delete this record?")) {
-                        fetch(`/delete/${entry.id}`, { method: 'DELETE' })  // ใช้ backticks เพื่อให้ ${entry.id} ทำงาน
-                            .then(response => response.json())
-                            .then(data => {
-                                alert(data.message);
-                                row.remove(); // ลบแถวที่ถูกเลือก
-                            })
-                            .catch(error => {
-                                console.error('Error deleting record:', error);
-                                alert('Error deleting record');
-                            });
-                    }
-                });
-                buttonContainer.appendChild(deleteBtn); // เพิ่มปุ่มลบใน container
-
-                // เพิ่มปุ่มทั้งหมดในแถว
-                actionCell.appendChild(buttonContainer);
-
-                // เพิ่มแถวลงในตาราง
-                row.appendChild(actionCell);
                 historyTable.appendChild(row);
             });
+
+            // เพิ่ม Event Listener ให้รูปทั้งหมด
+            document.querySelectorAll(".clickable-img").forEach(img => {
+                img.addEventListener("click", function () {
+                    document.getElementById("modalImage").src = this.src;
+                    new bootstrap.Modal(document.getElementById("imageModal")).show();
+                });
+            });
+
+            // เพิ่ม Event Listener ให้ปุ่มลบ
+            document.querySelectorAll(".delete-btn").forEach(button => {
+                button.addEventListener("click", function () {
+                    const recordId = this.getAttribute("data-id");
+                    deleteRecord(recordId, this);
+                });
+            });
         })
-        .catch((err) => {
-            console.error("Error fetching history data:", err); // แสดง error หากเกิดปัญหา
-            noDataMessage.textContent = "Error loading history data.";
+        .catch(error => {
+            console.error("Error fetching history data:", error);
+            noDataMessage.textContent = "⚠️ Error loading history data.";
             noDataMessage.style.display = "block";
         });
+
+    // ค้นหาข้อมูลในตาราง
+    searchInput.addEventListener("keyup", function () {
+        let filter = this.value.toLowerCase();
+        let rows = document.querySelectorAll("#historyTable tr");
+
+        rows.forEach(row => {
+            let text = row.textContent.toLowerCase();
+            row.style.display = text.includes(filter) ? "" : "none";
+        });
+    });
 });
+
+// ฟังก์ชันลบข้อมูลแบบ Popup สวยงาม
+function deleteRecord(recordId, button) {
+    Swal.fire({
+        title: "Are you sure?",
+        text: "You won't be able to revert this!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, delete it!"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/delete/${recordId}`, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    Swal.fire("Deleted!", data.message, "success");
+                    button.closest("tr").remove(); // ลบแถวออกจากตาราง
+                })
+                .catch(error => {
+                    console.error("Error deleting record:", error);
+                    Swal.fire("Error", "Failed to delete record", "error");
+                });
+        }
+    });
+}

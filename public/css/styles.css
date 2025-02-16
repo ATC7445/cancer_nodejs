@@ -1,19 +1,41 @@
-/* ซ่อน input file */
-.custom-file-input {
-    display: none;
+body {
+    background-color: #f8f9fa;
 }
 
-/* ปรับปุ่ม Choose File ให้อยู่ในลักษณะที่เหมาะสม */
-#chooseFileBtn {
-    cursor: pointer;
+img {
+    display: block;
+    margin: auto;
 }
 
-#fileName {
-    font-style: italic;
-    color: #555;
-    margin-left: 10px;
+button {
+    margin: 5px;
 }
 
-.ml-2 {
-    margin-left: 0.5rem;
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+}
+.image-container {
+    border: 3px solid #007bff; /* กรอบสีน้ำเงิน */
+    border-radius: 10px; /* มุมโค้งเล็กน้อย */
+    padding: 10px; /* เว้นระยะภายใน */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 380px; /* กำหนดความสูงของกรอบ */
+    background-color: #f8f9fa; /* พื้นหลังสีอ่อน */
+}
+.image-container img {
+    max-height: 350px;
+    max-width: 100%;
+    object-fit: contain; /* ป้องกันภาพยืด */
 }

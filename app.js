@@ -30,18 +30,36 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'static', 'uploads')));
 app.use("/outputs", express.static(path.join(__dirname, "static", "outputs")));
-
+app.use("/saved", express.static(path.join(__dirname, "static", "saved")));
 
 // Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// เพิ่มการลบไฟล์เมื่อมีการเปลี่ยนหน้า
 app.get('/history', (req, res) => {
+    // จัดการลบไฟล์ในโฟลเดอร์ uploads และ outputs
+    function clearUploadsAndOutputs() {
+        // ลบไฟล์ในโฟลเดอร์ uploads
+        const uploadDir = path.join(__dirname, 'static', 'uploads');
+        const uploadFiles = fs.readdirSync(uploadDir);
+        uploadFiles.forEach(file => {
+            fs.unlinkSync(path.join(uploadDir, file));
+        });
+
+        // ลบไฟล์ในโฟลเดอร์ outputs
+        const outputDir = path.join(__dirname, 'static', 'outputs');
+        const outputFiles = fs.readdirSync(outputDir);
+        outputFiles.forEach(file => {
+            fs.unlinkSync(path.join(outputDir, file));
+        });
+    }
+    clearUploadsAndOutputs();  // ลบไฟล์เมื่อเปลี่ยนหน้าไปที่ history
     res.sendFile(path.join(__dirname, 'public', 'history.html'));
 });
 
-// Upload image
+// Route สำหรับการอัปโหลดไฟล์
 app.post('/upload', (req, res) => {
     if (!req.files || !req.files.image) {
         return res.status(400).send({ message: "No file uploaded" });
@@ -49,83 +67,138 @@ app.post('/upload', (req, res) => {
 
     const image = req.files.image;
     const uploadPath = path.join(__dirname, 'static', 'uploads', image.name);
-    // ลบไฟล์เก่าก่อนอัปโหลดใหม่
+
     try {
-        const files = fs.readdirSync(path.join(__dirname, 'static', 'uploads'));
-        files.forEach(file => {
-            fs.unlinkSync(path.join(__dirname, 'static', 'uploads', file));
+        // ลบไฟล์ใน outputs และ uploads
+        ['uploads', 'outputs'].forEach(dir => {
+            const files = fs.readdirSync(path.join(__dirname, 'static', dir));
+            files.forEach(file => {
+                fs.unlinkSync(path.join(__dirname, 'static', dir, file));
+            });
+        });
+
+        image.mv(uploadPath, (err) => {
+            if (err) {
+                return res.status(500).send({ message: "Error uploading file", error: err });
+            }
+            res.json({ message: "File uploaded successfully", path: `/uploads/${image.name}` });
         });
     } catch (error) {
-        console.error('Error cleaning upload folder:', error);
+        console.error('Error cleaning folders:', error);
+        res.status(500).send('Error cleaning folders');
     }
+});
+
+// Clear btn
+app.post('/clear-upload', (req, res) => {
+    const uploadDir = path.join(__dirname, 'static', 'uploads');
+    const outputDir = path.join(__dirname, 'static', 'outputs');
     
-    image.mv(uploadPath, (err) => {
-        if (err) {
-            return res.status(500).send({ message: "Error uploading file", error: err });
-        }
-        res.json({ message: "File uploaded successfully", path: `/uploads/${image.name}` });
+    // ลบไฟล์ใน uploads
+    const uploadFiles = fs.readdirSync(uploadDir);
+    uploadFiles.forEach(file => {
+        fs.unlinkSync(path.join(uploadDir, file));
     });
+
+    // ลบไฟล์ใน outputs
+    const outputFiles = fs.readdirSync(outputDir);
+    outputFiles.forEach(file => {
+        fs.unlinkSync(path.join(outputDir, file));
+    });
+
+    res.json({ message: "Uploaded and output files cleared." });
 });
 
 
-// Predict
 app.post("/predict", (req, res) => {
     const imageFile = req.files.image;
     if (!imageFile) {
         return res.status(400).json({ error: "No image file provided" });
     }
 
-    const fileName = path.basename(imageFile.name);
-    const uploadPath = path.join(__dirname, 'static', 'uploads', fileName);
-    const outputFilePath = path.join(__dirname, 'static', 'outputs', `predicted_${fileName}`);
+    const originalFileName = path.basename(imageFile.name);
+    const uploadPath = path.join(__dirname, 'static', 'uploads', originalFileName);
+    const outputDir = path.join(__dirname, 'static', 'outputs');
 
-    // YOLO command
-    const command = `python yolov8_predict.py --weights best.pt --source ${uploadPath} --output ./static/outputs`;
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir);
+    }
 
-    exec(command, (error, stdout, stderr) => {
-        if (error) {
-            console.error("Error during prediction:", error);
-            return res.status(500).json({ message: "Prediction failed", error: stderr });
+    imageFile.mv(uploadPath, (err) => {
+        if (err) {
+            console.error("Error uploading image:", err);
+            return res.status(500).json({ error: "Failed to upload image" });
         }
-    
-        // ตรวจสอบโฟลเดอร์ใน outputs ว่าเป็นโฟลเดอร์ไหนที่ถูกสร้างล่าสุด
-        const outputDir = path.join(__dirname, 'static', 'outputs');
-        const folders = fs.readdirSync(outputDir).filter(folder => folder.startsWith('predictions'));
-        
-        // หาฟolders ที่มีหมายเลขสูงสุด (ล่าสุด)
-        const latestFolder = folders.sort().reverse()[0];  // sort in descending order
-        const predictedFilePath = path.join(outputDir, latestFolder, `${fileName}`);  // ปรับให้ตรงกับไฟล์ที่ YOLOv8 ผลลัพธ์
-    
-        console.log("Predicted File Path:", predictedFilePath);
-    
-        // ส่ง path ของภาพที่ทำการ predict กลับไปยัง frontend
-        res.json({ 
-            message: "Prediction completed", 
-            path: `/outputs/${latestFolder}/${fileName}`
+
+        const command = `python yolov8_predict.py --weights best.pt --source ${uploadPath} --output ${outputDir}`;
+
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                console.error("Error during prediction:", error);
+                return res.status(500).json({ message: "Prediction failed", error: stderr });
+            }
+
+            const outputFiles = fs.readdirSync(outputDir);
+            let predictedImagePath = null;
+
+            outputFiles.forEach(file => {
+                if (file.startsWith("predicted_") && (file.endsWith(".jpg") || file.endsWith(".png"))) {
+                    predictedImagePath = file;
+                }
+            });
+
+            if (!predictedImagePath) {
+                return res.status(500).json({ message: "No predicted image found" });
+            }
+
+            // ลบไฟล์ในโฟลเดอร์ outputs หลังจากพยากรณ์เสร็จ
+            outputFiles.forEach(file => {
+                if (file !== predictedImagePath) {
+                    fs.unlinkSync(path.join(outputDir, file)); // ลบไฟล์อื่น ๆ ใน outputs
+                }
+            });
+
+            const predictedImageUrl = `/outputs/${predictedImagePath}`;
+
+            res.json({
+                message: "Prediction completed",
+                path: predictedImageUrl
+            });
         });
     });
 });
 
 
-// Save result
+// Save
 app.post('/save', (req, res) => {
-    const { file_path, uploaded_at } = req.body;  // รับค่าจาก body
-
-    // กำหนดชื่อไฟล์ใหม่เพื่อไม่ให้ซ้ำกัน (สามารถใช้ UUID หรือ timestamp ได้)
+    const { file_path, uploaded_at } = req.body;
     const filename = path.basename(file_path);
+    const relativePath = path.join('saved', filename);
+    const outputPath = path.join(__dirname, 'static', 'outputs', filename);
 
-    // ใช้ path  // บันทึกเป็น path ที่ใช้งานใน web server
-    const relativePath = path.join('outputs', 'predictions', filename);  // ใช้ path ที่ถูกต้อง
+    try {
+        // ย้ายไฟล์จาก outputs ไปที่ saved
+        const savedPath = path.join(__dirname, 'static', 'saved', filename);
+        fs.renameSync(outputPath, savedPath);
 
-    // บันทึกข้อมูลในฐานข้อมูล (ไม่ใช้ user_id)
-    const sql = 'INSERT INTO images (file_name, file_path, uploaded_at) VALUES (?, ?, ?)';
-    db.query(sql, [filename, relativePath, uploaded_at], (err, result) => {
-        if (err) {
-            console.error('Error saving result:', err);
-            return res.status(500).send('Database error');
-        }
-        res.send({ message: 'Result saved successfully', id: result.insertId });
-    });
+        // ลบไฟล์ใน uploads
+        const uploadFiles = fs.readdirSync(path.join(__dirname, 'static', 'uploads'));
+        uploadFiles.forEach(file => {
+            fs.unlinkSync(path.join(__dirname, 'static', 'uploads', file));
+        });
+
+        const sql = 'INSERT INTO images (file_name, file_path, uploaded_at) VALUES (?, ?, ?)';
+        db.query(sql, [filename, relativePath, uploaded_at], (err, result) => {
+            if (err) {
+                console.error('Error saving result:', err);
+                return res.status(500).send('Database error');
+            }
+            res.send({ message: 'Result saved successfully', id: result.insertId });
+        });
+    } catch (err) {
+        console.error('Error saving file:', err);
+        res.status(500).send('Error saving file');
+    }
 });
 
 // Fetch history
@@ -144,35 +217,38 @@ app.get('/history-data', (req, res) => {
 app.delete('/delete/:id', (req, res) => {
     const imageId = req.params.id;
 
-    const sql = 'DELETE FROM images WHERE id = ?';
-    db.query(sql, [imageId], (err, result) => {
+    const getFileQuery = 'SELECT file_path FROM images WHERE id = ?';
+    db.query(getFileQuery, [imageId], (err, results) => {
         if (err) {
-            console.error('Error deleting record:', err);
-            return res.status(500).send({ message: 'Error deleting record' });
+            console.error('Error fetching file path:', err);
+            return res.status(500).send({ message: 'Error fetching file path' });
         }
-        res.send({ message: 'Record deleted successfully' });
+
+        if (results.length > 0) {
+            const filePath = path.join(__dirname, 'static', results[0].file_path);
+
+            try {
+                // ลบไฟล์ใน saved
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                }
+
+                const deleteQuery = 'DELETE FROM images WHERE id = ?';
+                db.query(deleteQuery, [imageId], (err, result) => {
+                    if (err) {
+                        console.error('Error deleting record:', err);
+                        return res.status(500).send({ message: 'Error deleting record' });
+                    }
+                    res.send({ message: 'Record and file deleted successfully' });
+                });
+            } catch (err) {
+                console.error('Error deleting file:', err);
+                res.status(500).send('Error deleting file');
+            }
+        } else {
+            res.status(404).send({ message: 'Record not found' });
+        }
     });
-});
-
-// Clear images
-app.post('/clear', (req, res) => {
-    const uploadsDir = path.join(__dirname, 'static', 'uploads');
-    const outputsDir = path.join(__dirname, 'static', 'outputs');
-
-    // ลบไฟล์ในโฟลเดอร์ uploads และ outputs
-    try {
-        fs.rmSync(uploadsDir, { recursive: true, force: true });
-        fs.rmSync(outputsDir, { recursive: true, force: true });
-
-        // สร้างโฟลเดอร์ใหม่
-        fs.mkdirSync(uploadsDir);
-        fs.mkdirSync(outputsDir);
-
-        res.send({ message: 'Images cleared successfully' });
-    } catch (error) {
-        console.error('Error clearing images:', error);
-        res.status(500).send({ message: 'Error clearing images', error: error.message });
-    }
 });
 
 // Start server

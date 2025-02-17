@@ -1,29 +1,28 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const BASE_URL = window.location.origin + "/cancer_nodejs"; // ✅ กำหนด BASE_URL อัตโนมัติ
+
     const fileInput = document.getElementById("fileInput");
     const originalImage = document.getElementById("originalImage");
+    const predictedImage = document.getElementById("predictedImage");
     const fileNameDisplay = document.getElementById("fileName");
     const predictBtn = document.getElementById("predictBtn");
     const alertModal = document.getElementById("alertModal");
     const modalMessage = document.getElementById("modalMessage");
     const loadingOverlay = document.getElementById("loadingOverlay");
-    
-    // ฟังก์ชันสำหรับแสดงสถานะ
+
     function showAlert(message) {
         modalMessage.textContent = message;
         new bootstrap.Modal(alertModal).show();
     }
 
-    // ฟังก์ชันสำหรับซ่อนสถานะ
     function hideAlert() {
         new bootstrap.Modal(alertModal).hide();
     }
 
-    // แสดงแอนิเมชันโหลด
     function showLoading() {
         loadingOverlay.classList.remove("d-none");
     }
 
-    // ซ่อนแอนิเมชันโหลด
     function hideLoading() {
         loadingOverlay.classList.add("d-none");
     }
@@ -53,42 +52,34 @@ document.addEventListener("DOMContentLoaded", () => {
         const formData = new FormData();
         formData.append('image', file);
 
-        showLoading(); // แสดงแอนิเมชันตอนเริ่มพยากรณ์
+        showLoading();
 
-        fetch('/cancer_nodejs/predict', { method: 'POST', body: formData })
-        .then(response => response.json())
-        .then(data => {
-            hideLoading(); // ซ่อนแอนิเมชันเมื่อ predict เสร็จ
-            if (data.path) {
-                predictedImage.src = '/cancer_nodejs/predict' + data.path;
-            } else {
-                alert("Prediction completed, but no image path received.");
-            }
-        })
-        .catch(error => {
-            hideLoading();
-            alert("Error during prediction");
-            console.error('Error:', error);
-        });
+        fetch(`${BASE_URL}/predict`, { method: 'POST', body: formData }) // ✅ ใช้ BASE_URL
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.path) {
+                    predictedImage.src = `${BASE_URL}${data.path}`; // ✅ ใช้ BASE_URL + path
+                } else {
+                    alert("Prediction completed, but no image path received.");
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                alert("Error during prediction");
+                console.error('Error:', error);
+            });
     });
 
-    // คำสั่งสำหรับ Clear
     document.getElementById('clearBtn').addEventListener('click', () => {
-            // รีเซ็ต input file
         fileInput.value = "";
-
-        // ลบข้อความที่แสดงชื่อไฟล์
         fileNameDisplay.textContent = "No file selected.";
-
-        // ลบรูปภาพที่แสดงอยู่
         originalImage.src = "";
         predictedImage.src = "";
-        
-        document.getElementById('originalImage').src = '';
-        document.getElementById('predictedImage').src = '';
+
         showAlert("Clearing files...");
 
-        fetch('/cancer_nodejs/clear-upload', { method: 'POST' })
+        fetch(`${BASE_URL}/clear-upload`, { method: 'POST' }) // ✅ ใช้ BASE_URL
             .then(response => response.json())
             .then(data => {
                 showAlert(data.message);
@@ -100,38 +91,36 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     });
 
-    // ปุ่ม save
     document.getElementById('saveBtn').addEventListener('click', () => {
-        const file_path = document.getElementById('predictedImage').src;
+        const file_path = predictedImage.src;
         if (!file_path) {
             showAlert('No predicted image available to save.');
             return;
         }
-    
-        // ✅ แปลงวันที่ให้เป็นรูปแบบที่ MySQL รองรับ
+
         function formatDateForMySQL(date) {
             const d = new Date(date);
             return d.toISOString().slice(0, 19).replace("T", " ");
         }
-    
+
         const uploaded_at = formatDateForMySQL(new Date());
-    
+
         showAlert("Saving result...");
-    
-        fetch('/cancer_nodejs/save', {
+
+        fetch(`${BASE_URL}/save`, { // ✅ ใช้ BASE_URL
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ file_path, uploaded_at }) // ✅ ส่งค่า uploaded_at ที่แปลงแล้ว
+            body: JSON.stringify({ file_path, uploaded_at })
         })
-        .then(response => response.json())
-        .then(data => {
-            showAlert(data.message);
-            hideAlert();
-        })
-        .catch(error => {
-            console.error('Error saving result:', error);
-            showAlert('Error saving result');
-            hideAlert();
-        });
-    });    
+            .then(response => response.json())
+            .then(data => {
+                showAlert(data.message);
+                hideAlert();
+            })
+            .catch(error => {
+                console.error('Error saving result:', error);
+                showAlert('Error saving result');
+                hideAlert();
+            });
+    });
 });

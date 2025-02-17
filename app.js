@@ -33,7 +33,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'static', 'uploads')));
 app.use("/outputs", express.static(path.join(__dirname, "static", "outputs")));
 app.use("/saved", express.static(path.join(__dirname, "static", "saved")));
 app.use((req, res, next)=>{
-    req.url = req.url.replace(/^\/cancer_nodejs/,'');
+    req.originalUrl = req.originalUrl.replace(/^\/cancer_nodejs/, '');
     next();
 });
 // Routes
@@ -133,7 +133,7 @@ app.post("/predict", (req, res) => {
             return res.status(500).json({ error: "Failed to upload image" });
         }
 
-        const command = `python3 yolov8_predict.py --weights best.pt --source ${uploadPath} --output ${outputDir}`;
+        const command = `python yolov8_predict.py --weights best.pt --source ${uploadPath} --output ${outputDir}`;
 
         exec(command, (error, stdout, stderr) => {
             if (error) {
@@ -162,10 +162,9 @@ app.post("/predict", (req, res) => {
             });
 
             const predictedImageUrl = `/outputs/${predictedImagePath}`;
-
             res.json({
                 message: "Prediction completed",
-                path: predictedImageUrl
+                path: predictedImageUrl.replace(/^\/cancer_nodejs/, '')  // ลบ /cancer_nodejs ออก
             });
         });
     });

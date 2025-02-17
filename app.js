@@ -9,10 +9,11 @@ const PORT = 3000;
 
 // MySQL connection setup
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'cancer_detection'
+    host: '44zer.h.filess.io',
+    user: 'predictedImg_roomgirldo',
+    password: '7148e63122ff221276d0d61d74e7724005c2d403',
+    database: 'predictedImg_roomgirldo',
+    port: 3305
 });
 
 db.connect(err => {

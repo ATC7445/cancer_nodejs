@@ -107,13 +107,21 @@ document.addEventListener("DOMContentLoaded", () => {
             showAlert('No predicted image available to save.');
             return;
         }
-
+    
+        // ✅ แปลงวันที่ให้เป็นรูปแบบที่ MySQL รองรับ
+        function formatDateForMySQL(date) {
+            const d = new Date(date);
+            return d.toISOString().slice(0, 19).replace("T", " ");
+        }
+    
+        const uploaded_at = formatDateForMySQL(new Date());
+    
         showAlert("Saving result...");
-
+    
         fetch('/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ file_path, uploaded_at: new Date().toISOString() })
+            body: JSON.stringify({ file_path, uploaded_at }) // ✅ ส่งค่า uploaded_at ที่แปลงแล้ว
         })
         .then(response => response.json())
         .then(data => {
@@ -125,5 +133,5 @@ document.addEventListener("DOMContentLoaded", () => {
             showAlert('Error saving result');
             hideAlert();
         });
-    });
+    });    
 });

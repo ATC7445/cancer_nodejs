@@ -5,7 +5,7 @@ const fs = require('fs');
 const mysql = require('mysql2');
 const { exec } = require('child_process');
 const app = express();
-const PORT = 3000;
+const PORT = 3001
 
 // MySQL connection setup
 const db = mysql.createConnection({
@@ -42,20 +42,19 @@ app.get('/', (req, res) => {
 app.get('/history', (req, res) => {
     // จัดการลบไฟล์ในโฟลเดอร์ uploads และ outputs
     function clearUploadsAndOutputs() {
-        // ลบไฟล์ในโฟลเดอร์ uploads
-        const uploadDir = path.join(__dirname, 'static', 'uploads');
-        const uploadFiles = fs.readdirSync(uploadDir);
-        uploadFiles.forEach(file => {
-            fs.unlinkSync(path.join(uploadDir, file));
+        const directories = ['uploads', 'outputs'];
+        directories.forEach(dir => {
+            const dirPath = path.join(__dirname, 'static', dir);
+            const files = fs.readdirSync(dirPath);
+            
+            files.forEach(file => {
+                const filePath = path.join(dirPath, file);
+                if (fs.lstatSync(filePath).isFile()) { // เช็คว่าเป็นไฟล์
+                    fs.unlinkSync(filePath);
+                }
+            });
         });
-
-        // ลบไฟล์ในโฟลเดอร์ outputs
-        const outputDir = path.join(__dirname, 'static', 'outputs');
-        const outputFiles = fs.readdirSync(outputDir);
-        outputFiles.forEach(file => {
-            fs.unlinkSync(path.join(outputDir, file));
-        });
-    }
+    }    
     clearUploadsAndOutputs();  // ลบไฟล์เมื่อเปลี่ยนหน้าไปที่ history
     res.sendFile(path.join(__dirname, 'public', 'history.html'));
 });

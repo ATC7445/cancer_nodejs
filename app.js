@@ -32,7 +32,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'static', 'uploads')));
 app.use("/outputs", express.static(path.join(__dirname, "static", "outputs")));
 app.use("/saved", express.static(path.join(__dirname, "static", "saved")));
-
+app.use((req, res, next)=>{
+    req.url = req.url.replace(/^\/cancer_nodejs/,'');
+    next();
+});
 // Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -172,13 +175,20 @@ app.post("/predict", (req, res) => {
 // Save
 app.post('/save', (req, res) => {
     const { file_path, uploaded_at } = req.body;
-    const filename = path.basename(file_path);
-    const relativePath = path.join('saved', filename);
-    const outputPath = path.join(__dirname, 'static', 'outputs', filename);
+    const originalFilename = path.basename(file_path);
+    
+    // ดึง Unix Timestamp (วินาที)
+    const unixTimestamp = Math.floor(Date.now() / 1000);
+    
+    // สร้างชื่อไฟล์ใหม่โดยเพิ่ม Unix Timestamp ต่อท้าย
+    const uniqueFilename = `${originalFilename.split('.')[0]}_${unixTimestamp}.${originalFilename.split('.').pop()}`;
+    
+    const relativePath = path.join('saved', uniqueFilename);
+    const outputPath = path.join(__dirname, 'static', 'outputs', originalFilename);
 
     try {
-        // ย้ายไฟล์จาก outputs ไปที่ saved
-        const savedPath = path.join(__dirname, 'static', 'saved', filename);
+        // ย้ายไฟล์จาก outputs ไปที่ saved โดยใช้ชื่อใหม่
+        const savedPath = path.join(__dirname, 'static', 'saved', uniqueFilename);
         fs.renameSync(outputPath, savedPath);
 
         // ลบไฟล์ใน uploads
@@ -188,7 +198,7 @@ app.post('/save', (req, res) => {
         });
 
         const sql = 'INSERT INTO images (file_name, file_path, uploaded_at) VALUES (?, ?, ?)';
-        db.query(sql, [filename, relativePath, uploaded_at], (err, result) => {
+        db.query(sql, [uniqueFilename, relativePath, uploaded_at], (err, result) => {
             if (err) {
                 console.error('Error saving result:', err);
                 return res.status(500).send('Database error');

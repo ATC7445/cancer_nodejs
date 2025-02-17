@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(data => {
             hideLoading(); // ซ่อนแอนิเมชันเมื่อ predict เสร็จ
             if (data.path) {
-                predictedImage.src = data.path;
+                predictedImage.src = '/cancer_nodejs/predict' + data.path;
             } else {
                 alert("Prediction completed, but no image path received.");
             }

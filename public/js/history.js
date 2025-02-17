@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("searchInput");
 
     // ดึงข้อมูลจาก API
-    fetch('/history-data')
+    fetch('/cancer_nodejs/history-data')
         .then(response => response.json())
         .then(data => {
             if (data.length === 0) {

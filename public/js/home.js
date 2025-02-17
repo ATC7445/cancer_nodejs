@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         showLoading(); // แสดงแอนิเมชันตอนเริ่มพยากรณ์
 
-        fetch('/predict', { method: 'POST', body: formData })
+        fetch('/cancer_nodejs/predict', { method: 'POST', body: formData })
         .then(response => response.json())
         .then(data => {
             hideLoading(); // ซ่อนแอนิเมชันเมื่อ predict เสร็จ
@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('predictedImage').src = '';
         showAlert("Clearing files...");
 
-        fetch('/clear-upload', { method: 'POST' })
+        fetch('/cancer_nodejs/clear-upload', { method: 'POST' })
             .then(response => response.json())
             .then(data => {
                 showAlert(data.message);
@@ -118,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
         showAlert("Saving result...");
     
-        fetch('/save', {
+        fetch('/cancer_nodejs/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ file_path, uploaded_at }) // ✅ ส่งค่า uploaded_at ที่แปลงแล้ว

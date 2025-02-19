@@ -1,53 +1,63 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const BASE_URL = window.location.origin + "/cancer_nodejs"; // ✅ กำหนด BASE_URL อัตโนมัติ
     const historyTable = document.getElementById("historyTable");
     const noDataMessage = document.getElementById("noDataMessage");
     const searchInput = document.getElementById("searchInput");
-    const BASE_URL = window.location.origin + "/cancer_nodejs"; // ✅ กำหนด BASE_URL อัตโนมัติ
+
     // ดึงข้อมูลจาก API
-    fetch('${BASE_URL}/history-data')
-    .then(response => response.json())
-    .then(data => {
-        console.log("API Response:", data); // ✅ ดูว่าค่าที่ได้คืออะไร
-        
-        if (!Array.isArray(data)) { // ✅ เช็คว่าเป็นอาร์เรย์จริงหรือไม่
-            console.error("Expected an array but got:", data);
-            noDataMessage.textContent = "⚠️ Error: Invalid data format.";
+    fetch(`${BASE_URL}/history-data`)  //
+        .then(response => response.json())
+        .then(data => {
+            if (data.length === 0) {
+                noDataMessage.style.display = "block"; // แสดงข้อความหากไม่มีข้อมูล
+                return;
+            }
+
+            data.forEach((entry, index) => {
+                const row = document.createElement("tr");
+
+                // คอลัมน์ลำดับ
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${entry.file_name}</td>
+                    <td>${new Date(entry.uploaded_at).toLocaleString()}</td>
+                    <td>
+                        <img src="${entry.file_path}" alt="Predicted Image" class="img-thumbnail clickable-img" style="max-width: 100px; cursor: pointer;">
+                    </td>
+                    <td class="text-center">
+                        <a href="${entry.file_path}" download="${entry.file_name}" class="btn btn-success btn-sm me-2">
+                            <i class="bi bi-download"></i> Download
+                        </a>
+                        <button class="btn btn-danger btn-sm delete-btn" data-id="${entry.id}">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </td>
+                `;
+
+                historyTable.appendChild(row);
+            });
+
+            // เพิ่ม Event Listener ให้รูปทั้งหมด
+            document.querySelectorAll(".clickable-img").forEach(img => {
+                img.addEventListener("click", function () {
+                    document.getElementById("modalImage").src = this.src;
+                    new bootstrap.Modal(document.getElementById("imageModal")).show();
+                });
+            });
+
+            // เพิ่ม Event Listener ให้ปุ่มลบ
+            document.querySelectorAll(".delete-btn").forEach(button => {
+                button.addEventListener("click", function () {
+                    const recordId = this.getAttribute("data-id");
+                    deleteRecord(recordId, this);
+                });
+            });
+        })
+        .catch(error => {
+            console.error("Error fetching history data:", error);
+            noDataMessage.textContent = "⚠️ Error loading history data.";
             noDataMessage.style.display = "block";
-            return;
-        }
-
-        if (data.length === 0) {
-            noDataMessage.style.display = "block"; // แสดงข้อความหากไม่มีข้อมูล
-            return;
-        }
-
-        data.forEach((entry, index) => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${entry.file_name}</td>
-                <td>${new Date(entry.uploaded_at).toLocaleString()}</td>
-                <td>
-                    <img src="${entry.file_path}" alt="Predicted Image" class="img-thumbnail clickable-img" style="max-width: 100px; cursor: pointer;">
-                </td>
-                <td class="text-center">
-                    <a href="${entry.file_path}" download="${entry.file_name}" class="btn btn-success btn-sm me-2">
-                        <i class="bi bi-download"></i> Download
-                    </a>
-                    <button class="btn btn-danger btn-sm delete-btn" data-id="${entry.id}">
-                        <i class="bi bi-trash"></i> Delete
-                    </button>
-                </td>
-            `;
-            historyTable.appendChild(row);
         });
-    })
-    .catch(error => {
-        console.error("Error fetching history data:", error);
-        noDataMessage.textContent = "⚠️ Error loading history data.";
-        noDataMessage.style.display = "block";
-    });
-
 
     // ค้นหาข้อมูลในตาราง
     searchInput.addEventListener("keyup", function () {

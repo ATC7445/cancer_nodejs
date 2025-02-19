@@ -170,7 +170,6 @@ app.post("/predict", (req, res) => {
     });
 });
 
-
 // Save
 app.post('/save', (req, res) => {
     const { file_path, uploaded_at } = req.body;
@@ -216,9 +215,17 @@ app.get('/history-data', (req, res) => {
     db.query(sql, (err, results) => {
         if (err) {
             console.error('Error fetching history:', err);
-            return res.status(500).send({ message: 'Database error' });
+            return res.status(500).json({ message: 'Database error' });
         }
-        res.json(results); // ส่งข้อมูลกลับในรูปแบบ JSON
+        
+        console.log("📌 Results from DB:", results); // ✅ ตรวจสอบว่าผลลัพธ์เป็นอาร์เรย์
+        
+        if (!Array.isArray(results)) {
+            console.error("❌ Expected an array but got:", results);
+            return res.status(500).json({ message: 'Invalid data format' });
+        }
+
+        res.json(results); // ✅ ส่งข้อมูลกลับเป็น JSON อาร์เรย์
     });
 });
 

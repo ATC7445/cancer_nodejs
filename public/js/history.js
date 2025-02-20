@@ -85,7 +85,7 @@ function deleteRecord(recordId, button) {
         confirmButtonText: "Yes, delete it!"
     }).then((result) => {
         if (result.isConfirmed) {
-            fetch(`/delete/${recordId}`, { method: 'DELETE' })
+            fetch(`${BASE_URL}/delete/${recordId}`, { method: 'DELETE' })
                 .then(response => response.json())
                 .then(data => {
                     Swal.fire("Deleted!", data.message, "success");

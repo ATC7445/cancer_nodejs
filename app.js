@@ -8,7 +8,8 @@ const app = express();
 const PORT = 3001
 
 // MySQL connection setup
-const db = mysql.createConnection({
+const db = mysql.createPool({
+    connectionLimit: 10, // จำกัดจำนวน connection ที่เปิดพร้อมกัน
     host: '44zer.h.filess.io',
     user: 'predictedImg_roomgirldo',
     password: '7148e63122ff221276d0d61d74e7724005c2d403',
@@ -16,12 +17,14 @@ const db = mysql.createConnection({
     port: 3305
 });
 
-db.connect(err => {
+// เชื่อมต่อทดสอบ
+db.getConnection((err, connection) => {
     if (err) {
-        console.error('MySQL connection error:', err);
+        console.error("MySQL connection error:", err);
         return;
     }
-    console.log('Connected to MySQL database');
+    console.log("✅ Connected to MySQL database");
+    connection.release(); // ปล่อย connection กลับไปใน pool
 });
 
 // Middleware

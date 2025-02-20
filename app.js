@@ -215,9 +215,10 @@ app.get('/history-data', (req, res) => {
     db.query(sql, (err, results) => {
         if (err) {
             console.error('Error fetching history:', err);
-            return res.status(500).send({ message: 'Database error' });
+            return res.status(500).json({ message: 'Database error' });
         }
-        res.json(results); // ส่งข้อมูลกลับในรูปแบบ JSON
+        console.log("Database results:", results);  // ✅ เช็คผลลัพธ์จาก DB
+        res.json(results);
     });
 });
 

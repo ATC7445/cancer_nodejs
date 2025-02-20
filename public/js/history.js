@@ -12,7 +12,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 noDataMessage.style.display = "block"; // แสดงข้อความหากไม่มีข้อมูล
                 return;
             }
-
+            if (!Array.isArray(data)) {
+                throw new Error("API response is not an array");
+            }
             data.forEach((entry, index) => {
                 const row = document.createElement("tr");
 

@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 alert("Error during prediction");
                 console.error('Error:', error);
             });
-    });
+    }); 
 
     document.getElementById('clearBtn').addEventListener('click', () => {
         fileInput.value = "";
@@ -89,6 +89,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 hideAlert();
                 console.error('Error:', error);
             });
+    });
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+        const filePath = predictedImage.src; // ใช้ path ของภาพที่ได้จากการพยากรณ์
+        if (!filePath || filePath.includes("placeholder")) { // ตรวจสอบว่ามีภาพหรือไม่
+            alert("No predicted image available to download.");
+            return;
+        }
+    
+        const fileName = filePath.split('/').pop(); // ดึงชื่อไฟล์จาก URL
+    
+        const link = document.createElement("a");
+        link.href = filePath;
+        link.download = fileName; // บังคับให้ดาวน์โหลด
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     });
 
     document.getElementById('saveBtn').addEventListener('click', () => {

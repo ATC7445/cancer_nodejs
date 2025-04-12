@@ -1,11 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const BASE_URL = window.location.origin + "/cancer_nodejs"; // ✅ กำหนด BASE_URL อัตโนมัติ
+    // const BASE_URL = window.location.origin; // ✅ กำหนด BASE_URL อัตโนมัติ
     const historyTable = document.getElementById("historyTable");
     const noDataMessage = document.getElementById("noDataMessage");
     const searchInput = document.getElementById("searchInput");
 
     // ดึงข้อมูลจาก API
-    fetch(`${BASE_URL}/history-data`)  //
+    fetch("/history-data")  //
         .then(response => response.json())
         .then(data => {
             if (data.length === 0) {
@@ -85,7 +85,7 @@ function deleteRecord(recordId, button) {
         confirmButtonText: "Yes, delete it!"
     }).then((result) => {
         if (result.isConfirmed) {
-            fetch(`${window.location.origin}/cancer_nodejs/delete/${recordId}`, { method: 'DELETE' })
+            fetch(`${window.location.origin}/delete/${recordId}`, { method: 'DELETE' })
                 .then(response => response.json())
                 .then(data => {
                     Swal.fire("Deleted!", data.message, "success");

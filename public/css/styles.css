@@ -1,41 +1,88 @@
 body {
-    background-color: #f8f9fa;
+  background-color: #f8f9fa;
 }
 
 img {
-    display: block;
-    margin: auto;
+  display: block;
+  margin: auto;
 }
 
 button {
-    margin: 5px;
+  margin: 5px;
 }
 
 .loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 1050;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
 }
 .image-container {
-    border: 3px solid #007bff; /* กรอบสีน้ำเงิน */
-    border-radius: 10px; /* มุมโค้งเล็กน้อย */
-    padding: 10px; /* เว้นระยะภายใน */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 380px; /* กำหนดความสูงของกรอบ */
-    background-color: #f8f9fa; /* พื้นหลังสีอ่อน */
+  border: 3px solid #007bff; /* กรอบสีน้ำเงิน */
+  border-radius: 10px; /* มุมโค้งเล็กน้อย */
+  padding: 10px; /* เว้นระยะภายใน */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 380px; /* กำหนดความสูงของกรอบ */
+  background-color: #f8f9fa; /* พื้นหลังสีอ่อน */
 }
 .image-container img {
-    max-height: 350px;
-    max-width: 100%;
-    object-fit: contain; /* ป้องกันภาพยืด */
+  max-height: 350px;
+  max-width: 100%;
+  object-fit: contain; /* ป้องกันภาพยืด */
+}
+/* สำหรับ bounding boxes */
+.bounding-box {
+  position: absolute;
+  border: 2px solid red;
+  background-color: rgba(255, 0, 0, 0.2);
+  color: white;
+  font-weight: bold;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none; /* ไม่ให้ขัดขวางการคลิก */
+}
+
+.bounding-box span {
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 2px 5px;
+  font-size: 12px;
+}
+
+/* สำหรับ range slider */
+.bounding-box {
+  position: absolute;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+#boundingBoxContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.form-range {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.bounding-box {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+#boundingBoxContainer {
+  position: relative;
+  z-index: 5;
 }

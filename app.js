@@ -157,25 +157,46 @@ app.post("/predict", async (req, res) => {
   );
 
   try {
-    // บันทึกภาพไว้ก่อน
+    // บันทึกภาพ
     await imageFile.mv(uploadPath);
+
+    // ตรวจสอบไฟล์
+    if (!fs.existsSync(uploadPath)) {
+      return res.status(500).json({ error: "Failed to save image file" });
+    }
+
+    // ทดสอบว่า Python API ทำงานหรือไม่
+    try {
+      await axios.get(pythonApiURL);
+      console.log("Python API is reachable");
+    } catch (pingError) {
+      console.error("Python API unreachable:", pingError.message);
+      return res.status(503).json({ error: "Python API is not available" });
+    }
 
     // ส่งภาพไปยัง Python API
     const form = new FormData();
-    form.append("image", fs.createReadStream(uploadPath)); // อ่านภาพจาก local
+    form.append("image", fs.createReadStream(uploadPath));
 
     const response = await axios.post(pythonApiURL, form, {
       headers: form.getHeaders(),
+      timeout: 60000,
     });
 
-    // รับผลลัพธ์จาก Python API แล้วส่งกลับให้ frontend
-    const result = response.data;
-    return res.json(result);
+    return res.json(response.data);
   } catch (error) {
-    console.error("Prediction failed:", error.message);
-    return res
-      .status(500)
-      .json({ message: "Prediction failed", error: error.message });
+    console.error("Prediction failed:", {
+      message: error.message,
+      stack: error.stack,
+      response: error.response ? error.response.data : null,
+    });
+    return res.status(500).json({
+      message: "Prediction failed",
+      error: error.message,
+      details: error.response
+        ? error.response.data
+        : "No response from Python API",
+    });
   }
 });
 

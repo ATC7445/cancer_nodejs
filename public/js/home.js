@@ -104,11 +104,12 @@ document.addEventListener("DOMContentLoaded", () => {
         hideLoading();
 
         if (data.path || (data.results && data.results.length > 0)) {
-          generateConfidenceImages(data.path || data.results[0]); // ถ้าใช้ results
+          generateConfidenceImages(data.results[0]); // base path
           const confidence = 60;
           const imagePath = `/outputs/predicted_conf${confidence}.jpg?t=${Date.now()}`;
           predictedImage.src = imagePath;
-        } else {
+        }
+        else {
           console.error("No path in response:", data);
           alert(
             "Prediction completed, but no image path received. Details in console."

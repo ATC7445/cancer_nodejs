@@ -4,12 +4,11 @@ const fileUpload = require("express-fileupload");
 const path = require("path");
 const fs = require("fs");
 const mysql = require("mysql2");
-const { exec } = require("child_process");
+// const { exec } = require("child_process");
 const app = express();
 const PORT = 3001;
 const axios = require("axios");
 const FormData = require("form-data");
-const fs = require("fs");
 const pythonApiURL =
   process.env.PYTHON_API_URL || "https://your-yolo-api.onrender.com/predict"; // แก้ URL ตามจริง
 

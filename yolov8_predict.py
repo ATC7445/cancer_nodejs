@@ -8,7 +8,7 @@ def predict(weights_path, source_path, output_dir):
     model = YOLO(weights_path)
 
     # รันการพยากรณ์โดยไม่ต้องสร้างโฟลเดอร์ย่อย
-    results = model.predict(source=source_path, save=True, save_txt=False, project=output_dir, name="")  # ใช้ชื่อไฟล์เดิม
+    results = model.predict(source=source_path, save=True, conf=0.4,save_txt=False, project=output_dir, name="")  # ใช้ชื่อไฟล์เดิม
 
     # ตรวจสอบและย้ายไฟล์ที่พยากรณ์ไปยังโฟลเดอร์ outputs
     for folder in os.listdir(output_dir):

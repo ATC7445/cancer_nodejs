@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const fileUpload = require("express-fileupload");
 const path = require("path");
@@ -10,11 +11,11 @@ const PORT = 3001;
 // MySQL connection setup
 const db = mysql.createPool({
   connectionLimit: 10, // จำกัดจำนวน connection ที่เปิดพร้อมกัน
-  host: "44zer.h.filess.io",
-  user: "predictedImg_roomgirldo",
-  password: "7148e63122ff221276d0d61d74e7724005c2d403",
-  database: "predictedImg_roomgirldo",
-  port: 3305,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT,
 });
 
 // เชื่อมต่อทดสอบ

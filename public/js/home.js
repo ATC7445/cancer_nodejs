@@ -227,7 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     for (let i = 9; i >= 4; i--) {
       const confidence = i * 10;
-      const imgSrc = `/outputs/predicted_conf${confidence}.jpg?t=${timestamp}`; // ✅ ป้องกัน cache
+      const imgSrc = `https://your-real-api.onrender.com/outputs/predicted_conf${confidence}.jpg?t=${timestamp}`; // ✅ ป้องกัน cache
 
       const col = document.createElement("div");
       col.className = "col-md-4 mb-4";

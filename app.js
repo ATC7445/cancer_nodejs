@@ -4,13 +4,9 @@ const fileUpload = require("express-fileupload");
 const path = require("path");
 const fs = require("fs");
 const mysql = require("mysql2");
-// const { exec } = require("child_process");
+const { exec } = require("child_process");
 const app = express();
 const PORT = 3001;
-const axios = require("axios");
-const FormData = require("form-data");
-const pythonApiURL =
-  process.env.PYTHON_API_URL || "https://yolo-api-tde1.onrender.com/predict"; // แก้ URL ตามจริง
 
 // MySQL connection setup
 const db = mysql.createPool({
@@ -31,7 +27,7 @@ db.getConnection((err, connection) => {
   console.log("✅ Connected to MySQL database");
   connection.release(); // ปล่อย connection กลับไปใน pool
 });
-//สร้างไฟล์
+//l
 const dirsToCheck = [
   path.join(__dirname, "static", "uploads"),
   path.join(__dirname, "static", "outputs"),
@@ -142,12 +138,12 @@ app.post("/clear-upload", (req, res) => {
   res.json({ message: "Uploaded and output files cleared." });
 });
 
-app.post("/predict", async (req, res) => {
-  if (!req.files || !req.files.image) {
+app.post("/predict", (req, res) => {
+  const imageFile = req.files.image;
+  if (!imageFile) {
     return res.status(400).json({ error: "No image file provided" });
   }
 
-  const imageFile = req.files.image;
   const originalFileName = path.basename(imageFile.name);
   const uploadPath = path.join(
     __dirname,
@@ -155,49 +151,89 @@ app.post("/predict", async (req, res) => {
     "uploads",
     originalFileName
   );
+  const outputDir = path.join(__dirname, "static", "outputs");
 
-  try {
-    // บันทึกภาพ
-    await imageFile.mv(uploadPath);
-
-    // ตรวจสอบไฟล์
-    if (!fs.existsSync(uploadPath)) {
-      return res.status(500).json({ error: "Failed to save image file" });
-    }
-
-    // ทดสอบว่า Python API ทำงานหรือไม่
-    try {
-      await axios.get(pythonApiURL);
-      console.log("Python API is reachable");
-    } catch (pingError) {
-      console.error("Python API unreachable:", pingError.message);
-      return res.status(503).json({ error: "Python API is not available" });
-    }
-
-    // ส่งภาพไปยัง Python API
-    const form = new FormData();
-    form.append("image", fs.createReadStream(uploadPath));
-
-    const response = await axios.post(pythonApiURL, form, {
-      headers: form.getHeaders(),
-      timeout: 60000,
-    });
-
-    return res.json(response.data);
-  } catch (error) {
-    console.error("Prediction failed:", {
-      message: error.message,
-      stack: error.stack,
-      response: error.response ? error.response.data : null,
-    });
-    return res.status(500).json({
-      message: "Prediction failed",
-      error: error.message,
-      details: error.response
-        ? error.response.data
-        : "No response from Python API",
-    });
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
   }
+
+  imageFile.mv(uploadPath, (err) => {
+    if (err) {
+      console.error("Error uploading image:", err);
+      return res.status(500).json({ error: "Failed to upload image" });
+    }
+
+    const pythonScriptPath = path.join(__dirname, "yolov8_predict.py");
+    const weightsPath = path.join(__dirname, "EX3.pt");
+
+    const command = `python "${pythonScriptPath}" --weights "${weightsPath}" --source "${uploadPath}" --output "${outputDir}"`;
+
+    console.log("Executing command:", command);
+
+    exec(command, (error, stdout, stderr) => {
+      // console.log("Python stdout:", stdout);
+      // console.error("Python stderr:", stderr);
+
+      if (error) {
+        console.error("Error during prediction:", error);
+        return res.status(500).json({
+          message: "Prediction failed",
+          error: stderr,
+          stdout: stdout,
+        });
+      }
+
+      // หาไฟล์ผลลัพธ์
+      const outputFiles = fs.readdirSync(outputDir);
+      let predictedImagePath = null;
+
+      outputFiles.forEach((file) => {
+        if (file.startsWith("predicted_") || file.startsWith("exp")) {
+          if (
+            file.endsWith(".jpg") ||
+            file.endsWith(".png") ||
+            file.endsWith(".jpeg")
+          ) {
+            predictedImagePath = file;
+          }
+        }
+      });
+
+      if (!predictedImagePath) {
+        console.error("No predicted image found in:", outputFiles);
+        return res.status(500).json({
+          message: "No predicted image found",
+          files: outputFiles,
+        });
+      }
+
+      // อ่านข้อมูล predictions จาก stdout (ถ้ามี)
+      let predictions = [];
+      try {
+        if (stdout) {
+          predictions = JSON.parse(stdout);
+        }
+      } catch (e) {
+        console.error("Error parsing predictions:", e);
+      }
+
+      const predictedImageUrl = `/outputs/${predictedImagePath}`;
+      const fullImagePath = path.join(outputDir, predictedImagePath);
+
+      if (!fs.existsSync(fullImagePath)) {
+        console.error("File does not exist:", fullImagePath);
+        return res.status(500).json({
+          message: "Predicted file not found on server",
+        });
+      }
+
+      res.json({
+        message: "Prediction completed",
+        path: predictedImageUrl,
+        predictions: predictions, // ส่งข้อมูล predictions ไปด้วย
+      });
+    });
+  });
 });
 
 // Save

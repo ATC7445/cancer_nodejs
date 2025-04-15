@@ -93,17 +93,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     showLoading();
 
-    // Ping Python API เพื่อ wake up
-    fetch("https://yolo-api-tde1.onrender.com")
-      .then(() => {
-        const formData = new FormData();
-        formData.append("image", file);
+    const formData = new FormData();
+    formData.append("image", file);
 
-        return fetch("/predict", {
-          method: "POST",
-          body: formData,
-        });
-      })
+    fetch("/predict", {
+      method: "POST",
+      body: formData,
+    })
       .then((response) => {
         if (!response.ok) {
           return response.json().then((err) => Promise.reject(err));
@@ -115,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Prediction response:", data);
         if (data.path || (data.results && data.results.length > 0)) {
           generateConfidenceImages(data.results ? data.results[0] : data.path);
-          const confidence = 60; // หรือปรับตาม response
+          const confidence = 60;
           const imagePath = `/outputs/predicted_conf${confidence}.jpg?t=${Date.now()}`;
           predictedImage.src = imagePath;
         } else {

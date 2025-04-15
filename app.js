@@ -27,6 +27,19 @@ db.getConnection((err, connection) => {
   console.log("✅ Connected to MySQL database");
   connection.release(); // ปล่อย connection กลับไปใน pool
 });
+//สร้างไฟล์
+const dirsToCheck = [
+  path.join(__dirname, "static", "uploads"),
+  path.join(__dirname, "static", "outputs"),
+  path.join(__dirname, "static", "saved"),
+];
+
+dirsToCheck.forEach((dirPath) => {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+    console.log("✅ Created directory:", dirPath);
+  }
+});
 
 // Middleware
 app.use(express.static(path.join(__dirname, "public")));

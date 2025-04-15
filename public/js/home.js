@@ -80,20 +80,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   predictBtn.addEventListener("click", () => {
     if (!fileInput.files.length) {
-      alert("Please select a file first.");
+      showAlert("Please select a file first.", "error");
       return;
     }
 
     const file = fileInput.files[0];
-    const formData = new FormData();
-    formData.append("image", file);
+    const validTypes = ["image/jpeg", "image/png"];
+    if (!validTypes.includes(file.type)) {
+      showAlert("Please select a valid image file (.jpg or .png)", "error");
+      return;
+    }
 
     showLoading();
 
-    fetch("/predict", {
-      method: "POST",
-      body: formData,
-    })
+    // Ping Python API เพื่อ wake up
+    fetch("https://yolo-api-tde1.onrender.com")
+      .then(() => {
+        const formData = new FormData();
+        formData.append("image", file);
+
+        return fetch("/predict", {
+          method: "POST",
+          body: formData,
+        });
+      })
       .then((response) => {
         if (!response.ok) {
           return response.json().then((err) => Promise.reject(err));
@@ -102,24 +112,28 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .then((data) => {
         hideLoading();
-
+        console.log("Prediction response:", data);
         if (data.path || (data.results && data.results.length > 0)) {
-          generateConfidenceImages(data.results[0]); // base path
-          const confidence = 60;
+          generateConfidenceImages(data.results ? data.results[0] : data.path);
+          const confidence = 60; // หรือปรับตาม response
           const imagePath = `/outputs/predicted_conf${confidence}.jpg?t=${Date.now()}`;
           predictedImage.src = imagePath;
-        }
-        else {
-          console.error("No path in response:", data);
-          alert(
-            "Prediction completed, but no image path received. Details in console."
+        } else {
+          showAlert(
+            "Prediction completed, but no valid image path received.",
+            "error"
           );
         }
       })
       .catch((error) => {
         hideLoading();
         console.error("Error during prediction:", error);
-        alert(`Prediction error: ${error.message || "Unknown error"}`);
+        showAlert(
+          `Prediction error: ${error.message || "Unknown error"}<br>Details: ${
+            error.details || "No details available"
+          }`,
+          "error"
+        );
       });
   });
 
@@ -218,19 +232,17 @@ document.addEventListener("DOMContentLoaded", () => {
   function generateConfidenceImages(baseImagePath) {
     const predictionGrid = document.getElementById("predictionGrid");
     predictionGrid.innerHTML = "";
-
-    const timestamp = Date.now(); // ✅ เพิ่ม timestamp เดียวกันทุกภาพ
+    const timestamp = Date.now();
 
     for (let i = 9; i >= 4; i--) {
       const confidence = i * 10;
-      const imgSrc = `https://yolo-api-tde1.onrender.com/outputs/predicted_conf${confidence}.jpg?t=${timestamp}`; // ✅ ป้องกัน cache
-
+      const imgSrc = `/outputs/predicted_conf${confidence}.jpg?t=${timestamp}`;
       const col = document.createElement("div");
       col.className = "col-md-4 mb-4";
       col.innerHTML = `
         <div class="card shadow-sm">
           <div class="card-header text-center fw-bold">Confidence: ${confidence}-100%</div>
-          <img src="${imgSrc}" class="card-img-top rounded" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#imageModal" data-img="${imgSrc}">
+          <img src="${imgSrc}" class="card-img-top rounded" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#imageModal" data-img="${imgSrc}" onerror="this.src='/placeholder.jpg';">
           <div class="card-body d-flex justify-content-between">
             <button class="btn btn-sm btn-info download-btn">Download</button>
             <button class="btn btn-sm btn-secondary save-btn">Save</button>

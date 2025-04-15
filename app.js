@@ -10,7 +10,7 @@ const PORT = 3001;
 const axios = require("axios");
 const FormData = require("form-data");
 const pythonApiURL =
-  process.env.PYTHON_API_URL || "https://your-yolo-api.onrender.com/predict"; // แก้ URL ตามจริง
+  process.env.PYTHON_API_URL || "https://yolo-api-tde1.onrender.com/predict"; // แก้ URL ตามจริง
 
 // MySQL connection setup
 const db = mysql.createPool({

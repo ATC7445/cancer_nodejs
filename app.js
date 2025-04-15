@@ -136,7 +136,7 @@ app.post("/predict", (req, res) => {
             return res.status(500).json({ error: "Failed to upload image" });
         }
 
-        const command = `python3 yolov8_predict.py --weights best.pt --source ${uploadPath} --output ${outputDir}`;
+        const command = `python3 yolov8_predict.py --weights EX3.pt --source ${uploadPath} --output ${outputDir}`;
 
         exec(command, (error, stdout, stderr) => {
             if (error) {

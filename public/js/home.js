@@ -102,17 +102,12 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .then((data) => {
         hideLoading();
-        if (data.path) {
-          generateConfidenceImages(data.path); // render 3x3 grid
 
-          // 👉 ใช้ภาพ predicted_conf10.jpg เป็นภาพหลักด้านขวา
+        if (data.path || (data.results && data.results.length > 0)) {
+          generateConfidenceImages(data.path || data.results[0]); // ถ้าใช้ results
           const confidence = 60;
           const imagePath = `/outputs/predicted_conf${confidence}.jpg?t=${Date.now()}`;
           predictedImage.src = imagePath;
-
-          predictedImage.onload = () => {
-            console.log("Image loaded successfully");
-          };
         } else {
           console.error("No path in response:", data);
           alert(

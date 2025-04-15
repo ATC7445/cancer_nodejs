@@ -36,6 +36,7 @@ app.use("/static", express.static(path.join(__dirname, "static")));
 app.use("/uploads", express.static(path.join(__dirname, "static", "uploads")));
 app.use("/outputs", express.static(path.join(__dirname, "static", "outputs")));
 app.use("/saved", express.static(path.join(__dirname, "static", "saved")));
+
 app.use((req, res, next) => {
   // req.originalUrl = req.originalUrl.replace(/^\/cancer_nodejs/, '');
   req.originalUrl = req.originalUrl;
@@ -149,15 +150,15 @@ app.post("/predict", (req, res) => {
     }
 
     const pythonScriptPath = path.join(__dirname, "yolov8_predict.py");
-    const weightsPath = path.join(__dirname, "best.pt");
+    const weightsPath = path.join(__dirname, "EX3.pt");
 
     const command = `python "${pythonScriptPath}" --weights "${weightsPath}" --source "${uploadPath}" --output "${outputDir}"`;
 
     console.log("Executing command:", command);
 
     exec(command, (error, stdout, stderr) => {
-      console.log("Python stdout:", stdout);
-      console.error("Python stderr:", stderr);
+      // console.log("Python stdout:", stdout);
+      // console.error("Python stderr:", stderr);
 
       if (error) {
         console.error("Error during prediction:", error);
@@ -282,7 +283,7 @@ app.get("/history-data", (req, res) => {
       console.error("Error fetching history:", err);
       return res.status(500).json({ message: "Database error" });
     }
-    console.log("Database results:", results); // ✅ เช็คผลลัพธ์จาก DB
+    // console.log("Database results:", results); // ✅ เช็คผลลัพธ์จาก DB
     res.json(results);
   });
 });

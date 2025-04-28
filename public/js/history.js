@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const BASE_URL = window.location.origin + "/cancer_nodejs"; // ✅ กำหนด BASE_URL อัตโนมัติ
+    const BASE_URL = window.location.origin; // ✅ กำหนด BASE_URL อัตโนมัติ
     const historyTable = document.getElementById("historyTable");
     const noDataMessage = document.getElementById("noDataMessage");
     const searchInput = document.getElementById("searchInput");

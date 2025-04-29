@@ -190,54 +190,78 @@ app.post("/predict", (req, res) => {
 
 // Save
 app.post("/save", (req, res) => {
-  const { file_path, uploaded_at } = req.body;
-  const originalFilename = path.basename(file_path);
+  const { file_path, uploaded_at, file_path_original } = req.body;
 
-  // ดึง Unix Timestamp (วินาที)
+  console.log("Received data:", req.body); // Debug log
+
+  if (!file_path_original) {
+    return res.status(400).send("Original file path is required");
+  }
+
+  const originalFilename = path.basename(file_path);
+  const originalOriginalFilename = path.basename(file_path_original);
   const unixTimestamp = Math.floor(Date.now() / 1000);
 
-  // สร้างชื่อไฟล์ใหม่โดยเพิ่ม Unix Timestamp ต่อท้าย
+  // สร้างชื่อไฟล์ที่ไม่ซ้ำ
   const uniqueFilename = `${
     originalFilename.split(".")[0]
   }_${unixTimestamp}.${originalFilename.split(".").pop()}`;
+  const uniqueOriginalFilename = `${
+    originalOriginalFilename.split(".")[0]
+  }_${unixTimestamp}.${originalOriginalFilename.split(".").pop()}`;
 
   const relativePath = path.join("saved", uniqueFilename);
-  const outputPath = path.join(
-    __dirname,
-    "static",
-    "outputs",
-    originalFilename
-  );
+  const relativeOriginalPath = path.join("saved", uniqueOriginalFilename);
 
+  // ย้ายไฟล์และบันทึกลงฐานข้อมูล
   try {
-    // ย้ายไฟล์จาก outputs ไปที่ saved โดยใช้ชื่อใหม่
+    // ย้ายไฟล์ predicted
+    const outputPath = path.join(
+      __dirname,
+      "static",
+      "outputs",
+      originalFilename
+    );
     const savedPath = path.join(__dirname, "static", "saved", uniqueFilename);
     fs.renameSync(outputPath, savedPath);
 
-    // ลบไฟล์ใน uploads
-    const uploadFiles = fs.readdirSync(
-      path.join(__dirname, "static", "uploads")
+    // ย้ายไฟล์ original
+    const uploadPath = path.join(
+      __dirname,
+      "static",
+      "uploads",
+      originalOriginalFilename
     );
-    uploadFiles.forEach((file) => {
-      fs.unlinkSync(path.join(__dirname, "static", "uploads", file));
-    });
+    const savedOriginalPath = path.join(
+      __dirname,
+      "static",
+      "saved",
+      uniqueOriginalFilename
+    );
+    fs.renameSync(uploadPath, savedOriginalPath);
 
-    const sql =
-      "INSERT INTO images (file_name, file_path, uploaded_at) VALUES (?, ?, ?)";
+    // บันทึกลงฐานข้อมูล
+    const sql = `INSERT INTO images 
+                (file_name, file_path, uploaded_at, file_path_original) 
+                VALUES (?, ?, ?, ?)`;
+
     db.query(
       sql,
-      [uniqueFilename, relativePath, uploaded_at],
+      [uniqueFilename, relativePath, uploaded_at, relativeOriginalPath],
       (err, result) => {
         if (err) {
-          console.error("Error saving result:", err);
+          console.error("Database error:", err);
           return res.status(500).send("Database error");
         }
-        res.send({ message: "Result saved successfully", id: result.insertId });
+        res.send({
+          message: "Result saved successfully",
+          id: result.insertId,
+        });
       }
     );
   } catch (err) {
-    console.error("Error saving file:", err);
-    res.status(500).send("Error saving file");
+    console.error("File system error:", err);
+    res.status(500).send("Error saving files");
   }
 });
 

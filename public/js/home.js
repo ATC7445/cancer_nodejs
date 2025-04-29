@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const BASE_URL = ""; // ✅ กำหนด BASE_URL อัตโนมัติ
+  const BASE_URL = window.location.origin; // ✅ กำหนด BASE_URL อัตโนมัติ
   //const BASE_URL = window.location.origin + "/cancer_nodejs"
   const fileInput = document.getElementById("fileInput");
   const originalImage = document.getElementById("originalImage");
@@ -26,10 +26,11 @@ document.addEventListener("DOMContentLoaded", () => {
   function hideLoading() {
     loadingOverlay.classList.add("d-none");
   }
-
+  let currentFileName = "";
   fileInput.addEventListener("change", () => {
     if (fileInput.files.length > 0) {
       const file = fileInput.files[0];
+      currentFileName = file.name; // เก็บชื่อไฟล์ไว้
       fileNameDisplay.textContent = `Selected: ${file.name}`;
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -37,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       reader.readAsDataURL(file);
     } else {
+      currentFileName = "";
       fileNameDisplay.textContent = "No file selected.";
       originalImage.src = "";
     }
@@ -59,8 +61,11 @@ document.addEventListener("DOMContentLoaded", () => {
       .then((data) => {
         hideLoading();
         if (data.path) {
-          predictedImage.src = `${BASE_URL}${data.path}`;
-          alert("Prediction completed, but no image path received.");
+          // ตรวจสอบว่า path มี /outputs/ หรือไม่
+          const fullPath = data.path.startsWith("/")
+            ? `${BASE_URL}${data.path}`
+            : `${BASE_URL}/outputs/${data.path}`;
+          predictedImage.src = fullPath;
         }
       })
       .catch((error) => {
@@ -108,35 +113,46 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("saveBtn").addEventListener("click", () => {
-    const file_path = predictedImage.src;
-    if (!file_path) {
+    const predictedImg = document.getElementById("predictedImage");
+
+    if (!predictedImg || !predictedImg.src) {
       showAlert("No predicted image available to save.");
       return;
     }
 
-    function formatDateForMySQL(date) {
-      const d = new Date(date);
-      return d.toISOString().slice(0, 19).replace("T", " ");
+    if (!currentFileName) {
+      showAlert("No original file information available.");
+      return;
     }
 
-    const uploaded_at = formatDateForMySQL(new Date());
+    // ดึงชื่อไฟล์ predicted จาก URL
+    const predictedPath = predictedImg.src.includes("/outputs/")
+      ? predictedImg.src.split("/outputs/").pop()
+      : predictedImg.src.split("/").pop();
 
-    showAlert("Saving result...");
+    const uploaded_at = new Date().toISOString().slice(0, 19).replace("T", " ");
 
     fetch(`${BASE_URL}/save`, {
-      // ✅ ใช้ BASE_URL
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ file_path, uploaded_at }),
+      body: JSON.stringify({
+        file_path: `/outputs/${predictedPath}`,
+        file_path_original: currentFileName, // ใช้ชื่อไฟล์ที่เก็บไว้
+        uploaded_at,
+      }),
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok)
+          throw new Error(`HTTP error! status: ${response.status}`);
+        return response.json();
+      })
       .then((data) => {
-        showAlert(data.message);
+        showAlert(data.message || "Saved successfully!");
         hideAlert();
       })
       .catch((error) => {
-        console.error("Error saving result:", error);
-        showAlert("Error saving result");
+        console.error("Save error:", error);
+        showAlert("Save failed: " + error.message);
         hideAlert();
       });
   });

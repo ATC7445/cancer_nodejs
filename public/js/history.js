@@ -24,15 +24,22 @@ document.addEventListener("DOMContentLoaded", () => {
                     <td>${entry.file_name}</td>
                     <td>${new Date(entry.uploaded_at).toLocaleString()}</td>
                     <td>
+                        <img src="${entry.file_path_original}" alt="Original Image" class="img-thumbnail clickable-img" style="max-width: 100px; cursor: pointer;">
+                    </td>
+                    <td>
                         <img src="${entry.file_path}" alt="Predicted Image" class="img-thumbnail clickable-img" style="max-width: 100px; cursor: pointer;">
                     </td>
                     <td class="text-center">
+                        <a href="${entry.file_path_original}" download="${entry.file_path_original}" class="btn btn-info btn-sm me-2">
+                            <i class="bi bi-download"></i>Original
+                        </a>
                         <a href="${entry.file_path}" download="${entry.file_name}" class="btn btn-success btn-sm me-2">
-                            <i class="bi bi-download"></i> Download
+                            <i class="bi bi-download"></i>Predicted
                         </a>
                         <button class="btn btn-danger btn-sm delete-btn" data-id="${entry.id}">
                             <i class="bi bi-trash"></i> Delete
                         </button>
+                        
                     </td>
                 `;
 

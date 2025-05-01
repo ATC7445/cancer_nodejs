@@ -4,6 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const mysql = require("mysql2");
 const { exec } = require("child_process");
+const session = require("express-session");
 const app = express();
 const PORT = 3001;
 
@@ -32,6 +33,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(fileUpload());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "static")));
 app.use("/uploads", express.static(path.join(__dirname, "static", "uploads")));
 app.use("/outputs", express.static(path.join(__dirname, "static", "outputs")));
 app.use("/saved", express.static(path.join(__dirname, "static", "saved")));
@@ -39,9 +41,57 @@ app.use((req, res, next) => {
   req.originalUrl = req.originalUrl.replace(/^\/cancer_nodejs/, "");
   next();
 });
+app.use(
+  session({
+    secret: "secret",
+    resave: true,
+    saveUninitialized: true,
+  })
+);
+
 // Routes
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "public", "login.html"));
+});
+
+app.get("/home", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "home.html"));
+});
+
+app.post("/auth", function (request, response) {
+  let username = request.body.username;
+  let password = request.body.password;
+
+  if (username && password) {
+    // รับ connection จาก pool ก่อนใช้งาน
+    db.getConnection((err, connection) => {
+      if (err) {
+        console.error("Error getting connection:", err);
+        return response.status(500).send("Database error");
+      }
+
+      connection.query(
+        "SELECT * FROM users WHERE username = ? AND password = ?",
+        [username, password],
+        function (error, results, fields) {
+          connection.release(); // ต้องไม่ลืม release connection
+
+          if (error) throw error;
+          if (results.length > 0) {
+            request.session.loggedin = true;
+            request.session.username = username;
+            response.redirect("/home");
+          } else {
+            response.send("Incorrect Username and/or Password!");
+          }
+          response.end();
+        }
+      );
+    });
+  } else {
+    response.send("Please enter Username and Password!");
+    response.end();
+  }
 });
 
 // เพิ่มการลบไฟล์เมื่อมีการเปลี่ยนหน้า

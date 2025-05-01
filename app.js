@@ -7,15 +7,15 @@ const { exec } = require("child_process");
 const session = require("express-session");
 const app = express();
 const PORT = 3001;
-
+require('dotenv').config();
 // MySQL connection setup
 const db = mysql.createPool({
   connectionLimit: 10, // จำกัดจำนวน connection ที่เปิดพร้อมกัน
-  host: "44zer.h.filess.io",
-  user: "predictedImg_roomgirldo",
-  password: "7148e63122ff221276d0d61d74e7724005c2d403",
-  database: "predictedImg_roomgirldo",
-  port: 3305,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT,
 });
 
 // เชื่อมต่อทดสอบ
@@ -43,18 +43,40 @@ app.use((req, res, next) => {
 });
 app.use(
   session({
-    secret: "secret",
-    resave: true,
-    saveUninitialized: true,
+    secret: process.env.SECRET_KEY,
+    resave: false, // เปลี่ยนจาก true เป็น false
+    saveUninitialized: false, // เปลี่ยนจาก true เป็น false
+    cookie: {
+      maxAge: 3600000, // 1 ชั่วโมง
+      httpOnly: true,
+      sameSite: "strict", // ป้องกัน CSRF
+    },
   })
 );
 
 // Routes
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
+  // ป้องกัน caching
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+
+  if (req.session.loggedin) {
+    return res.redirect("/home");
+  }
+
+  // ส่งพารามิเตอร์ logout ไปยังหน้า login
+  const logoutSuccess = req.query.logout === "true";
+  res.sendFile(path.join(__dirname, "public", "login.html"), {
+    headers: {
+      "Cache-Control": "no-store",
+    },
+  });
 });
 
 app.get("/home", (req, res) => {
+  if (!req.session.loggedin) {
+    // ถ้ายังไม่ได้ล็อกอิน ให้ redirect ไปหน้า Login
+    return res.redirect("/");
+  }
   res.sendFile(path.join(__dirname, "public", "home.html"));
 });
 
@@ -63,35 +85,69 @@ app.post("/auth", function (request, response) {
   let password = request.body.password;
 
   if (username && password) {
-    // รับ connection จาก pool ก่อนใช้งาน
     db.getConnection((err, connection) => {
       if (err) {
         console.error("Error getting connection:", err);
-        return response.status(500).send("Database error");
+        return response
+          .status(500)
+          .redirect(
+            "/?error=" + encodeURIComponent("Database connection error")
+          );
       }
 
       connection.query(
         "SELECT * FROM users WHERE username = ? AND password = ?",
         [username, password],
         function (error, results, fields) {
-          connection.release(); // ต้องไม่ลืม release connection
+          connection.release();
 
-          if (error) throw error;
+          if (error) {
+            console.error("Query error:", error);
+            return response.redirect(
+              "/?error=" + encodeURIComponent("Database error occurred")
+            );
+          }
+
           if (results.length > 0) {
             request.session.loggedin = true;
             request.session.username = username;
             response.redirect("/home");
           } else {
-            response.send("Incorrect Username and/or Password!");
+            response.redirect(
+              "/?error=" + encodeURIComponent("Incorrect Username or Password")
+            );
           }
-          response.end();
         }
       );
     });
   } else {
-    response.send("Please enter Username and Password!");
-    response.end();
+    response.redirect(
+      "/?error=" + encodeURIComponent("Please enter both Username and Password")
+    );
   }
+});
+
+// ตรวจสอบสถานะการล็อกอิน
+app.get("/check-auth", (req, res) => {
+  res.json({
+    loggedin: req.session.loggedin || false,
+    username: req.session.username || "",
+  });
+});
+
+// ออกจากระบบ
+app.get("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Session destruction error:", err);
+      return res.status(500).send("Logout failed");
+    }
+
+    // ลบ cookies และ redirect ไปหน้า login พร้อมป้องกัน caching
+    res.clearCookie("connect.sid");
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    res.redirect("/?logout=true"); // เพิ่มพารามิเตอร์ logout เพื่อแสดงข้อความ
+  });
 });
 
 // เพิ่มการลบไฟล์เมื่อมีการเปลี่ยนหน้า

@@ -56,3 +56,18 @@ body {
   background-color: #2868c7;
     transition: background-color 0.2s;
 }
+.error-message {
+    color: #ff3333;
+    background-color: #ffeeee;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #ffcccc;
+    text-align: center;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

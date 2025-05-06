@@ -7,7 +7,7 @@ const { exec } = require("child_process");
 const session = require("express-session");
 const app = express();
 const PORT = 3001;
-require('dotenv').config();
+require("dotenv").config();
 // MySQL connection setup
 const db = mysql.createPool({
   connectionLimit: 10, // จำกัดจำนวน connection ที่เปิดพร้อมกัน
@@ -44,13 +44,8 @@ app.use((req, res, next) => {
 app.use(
   session({
     secret: process.env.SECRET_KEY,
-    resave: false, // เปลี่ยนจาก true เป็น false
-    saveUninitialized: false, // เปลี่ยนจาก true เป็น false
-    cookie: {
-      maxAge: 3600000, // 1 ชั่วโมง
-      httpOnly: true,
-      sameSite: "strict", // ป้องกัน CSRF
-    },
+    resave: false,
+    saveUninitialized: true,
   })
 );
 

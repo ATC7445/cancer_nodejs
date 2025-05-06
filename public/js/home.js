@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const BASE_URL = window.location.origin; // ✅ กำหนด BASE_URL อัตโนมัติ
-  // const BASE_URL = window.location.origin + "/cancer_nodejs"
+  // const BASE_URL = window.location.origin; // ✅ กำหนด BASE_URL อัตโนมัติ
+  const BASE_URL = window.location.origin + "/cancer_nodejs"
   const fileInput = document.getElementById("fileInput");
   const originalImage = document.getElementById("originalImage");
   const predictedImage = document.getElementById("predictedImage");

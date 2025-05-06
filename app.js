@@ -41,12 +41,14 @@ app.use((req, res, next) => {
   req.originalUrl = req.originalUrl.replace(/^\/cancer_nodejs/, "");
   next();
 });
-app.use(session({
-  secret: process.env.SECRET_KEY,
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false }
-}));
+app.use(
+  session({
+    secret: "my_2255_112defkeofjri44545rg",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false },
+  })
+);
 
 // Routes
 app.get("/", (req, res) => {

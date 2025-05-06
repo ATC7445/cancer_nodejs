@@ -8,6 +8,14 @@ const session = require("express-session");
 const app = express();
 const PORT = 3001;
 require("dotenv").config();
+app.use(
+  session({
+    secret: "my_2255_112defkeofjri44545rg",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false },
+  })
+);
 // MySQL connection setup
 const db = mysql.createPool({
   connectionLimit: 10, // จำกัดจำนวน connection ที่เปิดพร้อมกัน
@@ -41,14 +49,7 @@ app.use((req, res, next) => {
   req.originalUrl = req.originalUrl.replace(/^\/cancer_nodejs/, "");
   next();
 });
-app.use(
-  session({
-    secret: "my_2255_112defkeofjri44545rg",
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false },
-  })
-);
+
 
 // Routes
 app.get("/", (req, res) => {

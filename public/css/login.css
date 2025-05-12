@@ -4,7 +4,7 @@
     font-size: 16px;
 }
 body {
-    background-image: url('cancer_nodejs/images/cancer_bg.webp');
+    background-image: url('/cancer_nodejs/images/cancer_bg.webp');
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;

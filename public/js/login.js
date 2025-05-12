@@ -4,8 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function checkLoginStatus() {
-  const BASE_URL = window.location.origin + "/cancer_nodejs"
-  fetch(`${BASE_URL}/check-auth`) //`${BASE_URL}/clear-upload`
+  fetch("/check-auth")
     .then((response) => response.json())
     .then((data) => {
       const authNav = document.getElementById("authNav");
@@ -44,7 +43,7 @@ function checkLoginStatus() {
 
 // แก้ไขฟังก์ชัน logout
 function logout() {
-  fetch(`${BASE_URL}/logout`, { method: "GET" })
+  fetch("/logout", { method: "GET" })
     .then(() => {
       // เปลี่ยนเป็น redirect ไปหน้า login โดยไม่ต้อง reload
       window.location.href = "/?logout=true";
@@ -72,7 +71,7 @@ window.addEventListener("load", function () {
 
 // เพิ่มฟังก์ชันตรวจสอบการล็อกอินแบบ real-time
 function validateSession() {
-  fetch(`${BASE_URL}/check-auth`, {
+  fetch("/check-auth", {
     credentials: "same-origin", // เพื่อให้ส่ง session cookie
   })
     .then((response) => {

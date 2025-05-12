@@ -18,7 +18,7 @@ function checkLoginStatus() {
 
         const logoutItem = document.createElement("li");
         logoutItem.className = "nav-item";
-        logoutItem.innerHTML = `<a class="nav-link text-light fs-5 btn btn-danger" href="#" id="logoutBtn">Logout</a>`;
+        logoutItem.innerHTML = `<a class="fs-5 btn btn-danger text-white" href="#" id="logoutBtn">Logout</a>`;
 
         authNav.appendChild(welcomeItem);
         authNav.appendChild(logoutItem);
@@ -46,11 +46,11 @@ function logout() {
   fetch(`${BASE_URL}/logout`, { method: "GET" })
     .then(() => {
       // เปลี่ยนเป็น redirect ไปหน้า login โดยไม่ต้อง reload
-      window.location.href = "/?logout=true";
+      window.location.href = "/cancer_nodejs?logout=true";
     })
     .catch((error) => {
       console.error("Error:", error);
-      window.location.href = "/"; // ถ้า error ก็ให้ไปหน้า login ธรรมดา
+      window.location.href = "/cancer_nodejs"; // ถ้า error ก็ให้ไปหน้า login ธรรมดา
     });
 }
 

@@ -47,6 +47,9 @@ app.use("/outputs", express.static(path.join(__dirname, "static", "outputs")));
 app.use("/saved", express.static(path.join(__dirname, "static", "saved")));
 app.use((req, res, next) => {
   req.originalUrl = req.originalUrl.replace(/^\/cancer_nodejs/, "");
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   next();
 });
 
@@ -134,17 +137,18 @@ app.get("/check-auth", (req, res) => {
 });
 
 // ออกจากระบบ
-app.get("/logout", (req, res) => {
+app.get('/logout', (req, res) => {
+  // ทำลาย session
   req.session.destroy((err) => {
     if (err) {
-      console.error("Session destruction error:", err);
-      return res.status(500).send("Logout failed");
+      console.error('Error destroying session:', err);
+      return res.status(500).send('Logout failed');
     }
 
-    // ลบ cookies และ redirect ไปหน้า login พร้อมป้องกัน caching
-    res.clearCookie("connect.sid");
-    res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
-    res.redirect("/?logout=true"); // เพิ่มพารามิเตอร์ logout เพื่อแสดงข้อความ
+    // ลบ cookie และเซ็ต header เพื่อป้องกัน caching
+    res.clearCookie('connect.sid'); // ลบ session cookie
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.redirect('/login?logout=true'); // Redirect ไปหน้า login
   });
 });
 

@@ -1,4 +1,3 @@
-// ไฟล์ script.js หรือส่วนท้ายของ HTML
 const BASE_URL = window.location.origin + "/cancer_nodejs";
 document.addEventListener("DOMContentLoaded", function () {
   checkLoginStatus();

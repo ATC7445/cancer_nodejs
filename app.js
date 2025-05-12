@@ -107,10 +107,11 @@ app.post("/auth", function (request, response) {
           if (results.length > 0) {
             request.session.loggedin = true;
             request.session.username = username;
-            response.redirect("/home");
+            response.redirect("/cancer_nodejs/home");
           } else {
             response.redirect(
-              "/?error=" + encodeURIComponent("Incorrect Username or Password")
+              "/cancer_nodejs/?error=" +
+                encodeURIComponent("Incorrect Username or Password")
             );
           }
         }
@@ -118,7 +119,8 @@ app.post("/auth", function (request, response) {
     });
   } else {
     response.redirect(
-      "/?error=" + encodeURIComponent("Please enter both Username and Password")
+      "/cancer_nodejs/?error=" +
+        encodeURIComponent("Please enter both Username and Password")
     );
   }
 });

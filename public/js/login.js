@@ -1,10 +1,10 @@
 // ไฟล์ script.js หรือส่วนท้ายของ HTML
+const BASE_URL = window.location.origin + "/cancer_nodejs";
 document.addEventListener("DOMContentLoaded", function () {
   checkLoginStatus();
 });
 
 function checkLoginStatus() {
-  const BASE_URL = window.location.origin + "/cancer_nodejs"
   fetch(`${BASE_URL}/check-auth`) //`${BASE_URL}/clear-upload`
     .then((response) => response.json())
     .then((data) => {

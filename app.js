@@ -148,7 +148,7 @@ app.get('/logout', (req, res) => {
     // ลบ cookie และเซ็ต header เพื่อป้องกัน caching
     res.clearCookie('connect.sid'); // ลบ session cookie
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    res.redirect('/login?logout=true'); // Redirect ไปหน้า login
+    res.redirect('/cancer_nodejs/?logout=true'); // Redirect ไปหน้า login
   });
 });
 
